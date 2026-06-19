@@ -665,6 +665,18 @@ function AddPage() {
       return;
     }
 
+    const normalizedBatchNumber = batchForm.batchNumber.trim().toLowerCase();
+
+    if (!normalizedBatchNumber) {
+      setGeneratedBagIds([]);
+      setGeneratedQRCodes([]);
+      setGeneratedBatchQRCode('');
+      setGeneratedBatchDetails(null);
+      setShowGeneratedQrPage(false);
+      setSaveState({ status: 'error', message: 'Batch number is required.' });
+      return;
+    }
+
     const batchPrefix = (batchForm.batchNumber || 'BATCH')
       .trim()
       .toUpperCase()
@@ -680,6 +692,25 @@ function AddPage() {
     setGeneratedBagIds(bagIds);
 
     try {
+      setSaveState({ status: 'saving', message: 'Checking batch number...' });
+
+      const batchesResponse = await fetch(`${API_BASE_URL}/api/batches`);
+      const batchesResult = await readJsonResponse(batchesResponse);
+
+      if (!batchesResponse.ok) {
+        throw new Error(batchesResult.error || 'Unable to check existing batches.');
+      }
+
+      const batchAlreadyExists = (batchesResult.batches || []).some((batch) => (
+        String(batch.batch_number || '').trim().toLowerCase() === normalizedBatchNumber
+      ));
+
+      if (batchAlreadyExists) {
+        setGeneratedBagIds([]);
+        setSaveState({ status: 'error', message: `Batch number ${batchForm.batchNumber.trim()} already exists.` });
+        return;
+      }
+
       setSaveState({ status: 'saving', message: 'Generating QR codes and saving batch...' });
 
       const qrResponse = await fetch(`${API_BASE_URL}/api/qrcodes`, {
