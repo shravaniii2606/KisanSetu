@@ -361,7 +361,7 @@ export default function NewBagScannerPage({ setCurrentPage, farmerData: initialF
           Upload QR Image
         </button>
         {scanning && (
-          <button className="scanner-btn" style={{ background: '#ef4444' }} onClick={stopScanner}>
+          <button className="scanner-btn" style={{ background: 'linear-gradient(135deg, #ef4444 0%, #b91c1c 100%)', boxShadow: '0 8px 20px rgba(239, 68, 68, 0.15)' }} onClick={stopScanner}>
             Stop QR Scan
           </button>
         )}
@@ -375,50 +375,50 @@ export default function NewBagScannerPage({ setCurrentPage, farmerData: initialF
         onChange={handleFileUpload}
       />
 
-      <div id="qr-reader" className="qr-reader" />
+      <div id="qr-reader" className="qr-reader" style={{ border: '2px dashed var(--border-glow)', background: 'rgba(0, 0, 0, 0.2)' }} />
 
-      {scanStatus && <p style={{ marginTop: '16px' }}>{scanStatus}</p>}
-      {scanError && <p className="error" style={{ marginTop: '8px' }}>{scanError}</p>}
-      {loading && <p>Loading...</p>}
+      {scanStatus && <p style={{ marginTop: '16px', color: 'var(--text-secondary)' }}>{scanStatus}</p>}
+      {scanError && <p className="error" style={{ marginTop: '8px', color: '#f87171' }}>{scanError}</p>}
+      {loading && <p style={{ color: 'var(--text-secondary)' }}>Loading...</p>}
 
       {farmerData && (
-        <div style={{ marginTop: '24px', padding: '20px', border: '1px solid #d1d5db', borderRadius: '16px', background: '#ffffff' }}>
-          <h3 style={{ margin: 0, marginBottom: '12px' }}>Farmer</h3>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: '12px' }}>
-            <div><strong>Name:</strong> {farmerData.name || '—'}</div>
-            <div><strong>Aadhar:</strong> {farmerData.aadhar_id || farmerData.aadhar || '—'}</div>
-            <div><strong>Village:</strong> {farmerData.village || '—'}</div>
-            <div><strong>District:</strong> {farmerData.district || '—'}</div>
-            <div><strong>Phone:</strong> {farmerData.phone || '—'}</div>
+        <div style={{ marginTop: '24px', padding: '20px', border: '1px solid var(--border-glow)', borderRadius: '16px', background: 'var(--bg-card)', backdropFilter: 'blur(12px)', boxShadow: 'var(--glow-shadow)' }}>
+          <h3 style={{ margin: 0, marginBottom: '12px', color: 'var(--text-primary)' }}>Farmer</h3>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: '12px', color: 'var(--text-secondary)' }}>
+            <div><strong style={{ color: 'var(--text-primary)' }}>Name:</strong> {farmerData.name || '—'}</div>
+            <div><strong style={{ color: 'var(--text-primary)' }}>Aadhar:</strong> {farmerData.aadhar_id || farmerData.aadhar || '—'}</div>
+            <div><strong style={{ color: 'var(--text-primary)' }}>Village:</strong> {farmerData.village || '—'}</div>
+            <div><strong style={{ color: 'var(--text-primary)' }}>District:</strong> {farmerData.district || '—'}</div>
+            <div><strong style={{ color: 'var(--text-primary)' }}>Phone:</strong> {farmerData.phone || '—'}</div>
           </div>
         </div>
       )}
 
       {scannedBags.length > 0 ? (
-        <div style={{ marginTop: '24px', padding: '20px', border: '1px solid #d1d5db', borderRadius: '16px', background: '#ffffff' }}>
-          <h3 style={{ margin: 0, marginBottom: '16px' }}>Bill Summary</h3>
+        <div style={{ marginTop: '24px', padding: '20px', border: '1px solid var(--border-glow)', borderRadius: '16px', background: 'var(--bg-card)', backdropFilter: 'blur(12px)', boxShadow: 'var(--glow-shadow)' }}>
+          <h3 style={{ margin: 0, marginBottom: '16px', color: 'var(--text-primary)' }}>Bill Summary</h3>
           <div style={{ overflowX: 'auto' }}>
             <table style={{ width: '100%', borderCollapse: 'collapse' }}>
               <thead>
                 <tr>
-                  <th style={{ textAlign: 'left', borderBottom: '1px solid #e2e8f0', padding: '8px' }}>Bag ID</th>
-                  <th style={{ textAlign: 'left', borderBottom: '1px solid #e2e8f0', padding: '8px' }}>Product</th>
-                  <th style={{ textAlign: 'left', borderBottom: '1px solid #e2e8f0', padding: '8px' }}>Weight</th>
-                  <th style={{ textAlign: 'right', borderBottom: '1px solid #e2e8f0', padding: '8px' }}>Price</th>
-                  <th style={{ textAlign: 'center', borderBottom: '1px solid #e2e8f0', padding: '8px' }}>Remove</th>
+                  <th style={{ textAlign: 'left', borderBottom: '1px solid var(--border-glow)', padding: '12px 8px', color: 'var(--text-secondary)' }}>Bag ID</th>
+                  <th style={{ textAlign: 'left', borderBottom: '1px solid var(--border-glow)', padding: '12px 8px', color: 'var(--text-secondary)' }}>Product</th>
+                  <th style={{ textAlign: 'left', borderBottom: '1px solid var(--border-glow)', padding: '12px 8px', color: 'var(--text-secondary)' }}>Weight</th>
+                  <th style={{ textAlign: 'right', borderBottom: '1px solid var(--border-glow)', padding: '12px 8px', color: 'var(--text-secondary)' }}>Price</th>
+                  <th style={{ textAlign: 'center', borderBottom: '1px solid var(--border-glow)', padding: '12px 8px', color: 'var(--text-secondary)' }}>Remove</th>
                 </tr>
               </thead>
               <tbody>
                 {scannedBags.map((bag) => (
                   <tr key={bag.id}>
-                    <td style={{ padding: '12px 8px', borderBottom: '1px solid #f1f5f9' }}>{bag.id}</td>
-                    <td style={{ padding: '12px 8px', borderBottom: '1px solid #f1f5f9' }}>{bag.product_name || '—'}</td>
-                    <td style={{ padding: '12px 8px', borderBottom: '1px solid #f1f5f9' }}>{bag.bag_weight || '—'}</td>
-                    <td style={{ padding: '12px 8px', borderBottom: '1px solid #f1f5f9', textAlign: 'right' }}>
+                    <td style={{ padding: '12px 8px', borderBottom: '1px solid rgba(255, 255, 255, 0.05)', color: 'var(--text-primary)' }}>{bag.id}</td>
+                    <td style={{ padding: '12px 8px', borderBottom: '1px solid rgba(255, 255, 255, 0.05)', color: 'var(--text-primary)' }}>{bag.product_name || '—'}</td>
+                    <td style={{ padding: '12px 8px', borderBottom: '1px solid rgba(255, 255, 255, 0.05)', color: 'var(--text-primary)' }}>{bag.bag_weight || '—'}</td>
+                    <td style={{ padding: '12px 8px', borderBottom: '1px solid rgba(255, 255, 255, 0.05)', textAlign: 'right', color: 'var(--text-primary)' }}>
                       {getBagPrice(bag) ? formatCurrency(getBagPrice(bag)) : 'N/A'}
                     </td>
-                    <td style={{ padding: '12px 8px', borderBottom: '1px solid #f1f5f9', textAlign: 'center' }}>
-                      <button type="button" onClick={() => removeScannedBag(bag.id)} style={{ border: 'none', background: 'transparent', color: '#ef4444', cursor: 'pointer' }}>
+                    <td style={{ padding: '12px 8px', borderBottom: '1px solid rgba(255, 255, 255, 0.05)', textAlign: 'center' }}>
+                      <button type="button" onClick={() => removeScannedBag(bag.id)} style={{ border: 'none', background: 'transparent', color: '#f87171', cursor: 'pointer', fontWeight: 600 }}>
                         Remove
                       </button>
                     </td>
@@ -430,10 +430,10 @@ export default function NewBagScannerPage({ setCurrentPage, farmerData: initialF
 
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '16px' }}>
             <div>
-              <p style={{ margin: 0, fontWeight: 600 }}>Total items: {scannedBags.length}</p>
-              <p style={{ margin: '4px 0 0', color: '#475569' }}>Total amount before OTP.</p>
+              <p style={{ margin: 0, fontWeight: 600, color: 'var(--text-primary)' }}>Total items: {scannedBags.length}</p>
+              <p style={{ margin: '4px 0 0', color: 'var(--text-secondary)', fontSize: '13px' }}>Total amount before OTP.</p>
             </div>
-            <div style={{ fontSize: '1.25rem', fontWeight: 700 }}>{formatCurrency(totalAmount)}</div>
+            <div style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--text-primary)' }}>{formatCurrency(totalAmount)}</div>
           </div>
 
           <div style={{ marginTop: '24px', display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
@@ -479,20 +479,20 @@ export default function NewBagScannerPage({ setCurrentPage, farmerData: initialF
           </div>
         </div>
       ) : (
-        <div style={{ marginTop: '24px', padding: '20px', border: '1px dashed #cbd5e1', borderRadius: '16px', textAlign: 'center', background: '#f8fafc' }}>
-          <p style={{ margin: 0, color: '#475569' }}>Scan QR codes to add bags to the bill.</p>
+        <div style={{ marginTop: '24px', padding: '32px 20px', border: '1px dashed var(--border-glow)', borderRadius: '16px', textAlign: 'center', background: 'rgba(10, 15, 10, 0.4)' }}>
+          <p style={{ margin: 0, color: 'var(--text-secondary)' }}>Scan QR codes to add bags to the bill.</p>
         </div>
       )}
 
       <style>{`
         .otp-verification-panel {
-          background: rgba(255, 255, 255, 0.08);
+          background: rgba(10, 15, 10, 0.4);
           backdrop-filter: blur(10px);
-          border: 1px solid rgba(255, 255, 255, 0.15);
+          border: 1px solid var(--border-glow);
           border-radius: 16px;
           padding: 24px;
           margin-top: 24px;
-          box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.08);
+          box-shadow: var(--glow-shadow);
           animation: slideUp 0.3s ease-out;
         }
         @keyframes slideUp {
@@ -501,12 +501,12 @@ export default function NewBagScannerPage({ setCurrentPage, farmerData: initialF
         }
         .otp-verification-panel h3 {
           margin-top: 0;
-          color: #16a34a;
+          color: var(--accent-primary);
           font-size: 1.25rem;
-          font-weight: 600;
+          font-weight: 700;
         }
         .otp-hint {
-          color: #475569;
+          color: var(--text-secondary);
           margin: 8px 0 20px 0;
           font-size: 0.95rem;
         }
@@ -519,39 +519,39 @@ export default function NewBagScannerPage({ setCurrentPage, farmerData: initialF
         .otp-input-field {
           flex: 1;
           min-width: 180px;
-          background: #f8fafc;
-          border: 2px solid #cbd5e1;
+          background: rgba(10, 15, 10, 0.7);
+          border: 1px solid var(--border-glow);
           border-radius: 8px;
           padding: 12px 16px;
-          color: #0f172a;
+          color: var(--text-primary);
           font-size: 1rem;
           outline: none;
           transition: border-color 0.2s ease, box-shadow 0.2s ease;
         }
         .otp-input-field:focus {
-          border-color: #22c55e;
+          border-color: var(--accent-primary);
           box-shadow: 0 0 0 4px rgba(34, 197, 94, 0.12);
         }
         .verify-otp-button {
-          background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+          background: linear-gradient(135deg, var(--accent-primary) 0%, var(--accent-dim) 100%);
           color: white;
           border: none;
           border-radius: 8px;
           padding: 12px 24px;
-          font-weight: 600;
+          font-weight: 700;
           cursor: pointer;
           transition: transform 0.2s ease, box-shadow 0.2s ease;
         }
         .verify-otp-button:hover:not(:disabled) {
           transform: translateY(-2px);
-          box-shadow: 0 4px 12px rgba(16, 185, 129, 0.25);
+          box-shadow: 0 4px 12px rgba(34, 197, 94, 0.25);
         }
         .verify-otp-button:disabled {
           opacity: 0.6;
           cursor: not-allowed;
         }
         .error-message {
-          color: #dc2626;
+          color: #f87171;
           font-size: 0.95rem;
           margin: 8px 0 0;
           font-weight: 500;
@@ -565,12 +565,12 @@ export default function NewBagScannerPage({ setCurrentPage, farmerData: initialF
           gap: 12px;
         }
         .resend-countdown {
-          color: #64748b;
+          color: var(--text-secondary);
           font-size: 0.9rem;
         }
         .resend-button {
           background: transparent;
-          color: #2563eb;
+          color: var(--accent-hover);
           border: none;
           cursor: pointer;
           font-size: 0.95rem;
@@ -579,7 +579,7 @@ export default function NewBagScannerPage({ setCurrentPage, farmerData: initialF
           transition: color 0.2s ease;
         }
         .resend-button:hover {
-          color: #3b82f6;
+          color: var(--accent-primary);
           text-decoration: underline;
         }
       `}</style>
