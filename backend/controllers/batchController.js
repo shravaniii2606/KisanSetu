@@ -70,6 +70,20 @@ async function createBatch(req, res) {
     }
 
     const supabase = getSupabaseClient();
+    const { data: existingBatches, error: duplicateCheckError } = await supabase
+      .from(batchesTable)
+      .select('id')
+      .ilike('batch_number', payload.batch_number)
+      .limit(1);
+
+    if (duplicateCheckError) {
+      return res.status(500).json({ error: duplicateCheckError.message });
+    }
+
+    if (existingBatches?.length) {
+      return res.status(409).json({ error: `Batch number ${payload.batch_number} already exists.` });
+    }
+
     const { data, error } = await supabase
       .from(batchesTable)
       .insert([payload])
