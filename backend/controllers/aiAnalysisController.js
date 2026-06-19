@@ -5,11 +5,130 @@ const FERTILIZER_REQUIREMENTS = {
   Soybean: 35, Maize: 55, Sunflower: 45,
 };
 
+const ALERT_TYPES = {
+  LIMIT_EXCEEDED: 'limit_exceeded',
+  MULTI_DEALER_BYPASS: 'multi_dealer_bypass',
+  GHOST_FARMER: 'ghost_farmer',
+  BULK_HOARDING: 'bulk_hoarding',
+  DISTRICT_ANOMALY: 'district_anomaly',
+};
+
 function calculateLimit(landRecords, cropRecords) {
   const totalLand = landRecords.reduce((s, l) => s + (l.land_area || 0), 0);
   const allCrops = cropRecords.flatMap(c => c.crop_types || []);
   const perAcre = allCrops.reduce((s, c) => s + (FERTILIZER_REQUIREMENTS[c] ?? 40), 0);
   return Math.round(totalLand * perAcre) || 100;
+}
+
+function buildRuleBasedAlerts(farmerProfiles) {
+  const districtTotals = farmerProfiles.reduce((acc, farmer) => {
+    if (!acc[farmer.district]) acc[farmer.district] = { totalKg: 0, count: 0 };
+    acc[farmer.district].totalKg += farmer.totalKg;
+    acc[farmer.district].count += 1;
+    return acc;
+  }, {});
+
+  const alerts = [];
+
+  for (const farmer of farmerProfiles) {
+    if (farmer.totalKg > farmer.limit) {
+      alerts.push({
+        farmer_aadhar: farmer.aadhar,
+        farmer_name: farmer.name,
+        district: farmer.district,
+        alert_type: ALERT_TYPES.LIMIT_EXCEEDED,
+        message: `Purchased ${farmer.totalKg}kg against ${farmer.limit}kg seasonal limit.`,
+        severity: 'High',
+      });
+    }
+
+    if (farmer.uniqueDealers >= 3) {
+      alerts.push({
+        farmer_aadhar: farmer.aadhar,
+        farmer_name: farmer.name,
+        district: farmer.district,
+        alert_type: ALERT_TYPES.MULTI_DEALER_BYPASS,
+        message: `Purchased through ${farmer.uniqueDealers} different dealers in the same season.`,
+        severity: 'Medium',
+      });
+    }
+
+    if (farmer.landRecordCount === 0 && farmer.cropRecordCount === 0) {
+      alerts.push({
+        farmer_aadhar: farmer.aadhar,
+        farmer_name: farmer.name,
+        district: farmer.district,
+        alert_type: ALERT_TYPES.GHOST_FARMER,
+        message: 'Has fertilizer transactions but no land or crop records.',
+        severity: 'High',
+      });
+    }
+
+    const largestTransactionKg = farmer.transactions.reduce((max, tx) => Math.max(max, tx.quantity_kg || 0), 0);
+    if (largestTransactionKg > farmer.limit * 0.8) {
+      alerts.push({
+        farmer_aadhar: farmer.aadhar,
+        farmer_name: farmer.name,
+        district: farmer.district,
+        alert_type: ALERT_TYPES.BULK_HOARDING,
+        message: `Largest single purchase was ${largestTransactionKg}kg against ${farmer.limit}kg seasonal limit.`,
+        severity: 'Medium',
+      });
+    }
+
+    const district = districtTotals[farmer.district];
+    const peerCount = Math.max((district?.count || 0) - 1, 0);
+    const peerAverage = peerCount > 0 ? (district.totalKg - farmer.totalKg) / peerCount : 0;
+    if (peerAverage > 0 && farmer.totalKg > peerAverage * 3) {
+      alerts.push({
+        farmer_aadhar: farmer.aadhar,
+        farmer_name: farmer.name,
+        district: farmer.district,
+        alert_type: ALERT_TYPES.DISTRICT_ANOMALY,
+        message: `Purchased ${farmer.totalKg}kg, more than 3x district peer average of ${Math.round(peerAverage)}kg.`,
+        severity: 'Medium',
+      });
+    }
+  }
+
+  return alerts;
+}
+
+async function getAIAlerts(prompt) {
+  const apiKey = process.env.OPENROUTER_API_KEY?.trim();
+  if (!apiKey) return null;
+
+  const openRouterRes = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${apiKey}`,
+      'HTTP-Referer': 'http://localhost:5000',
+      'X-Title': 'Fertilizer Distribution Monitor',
+    },
+    body: JSON.stringify({
+      model: process.env.OPENROUTER_MODEL || 'poolside/laguna-m.1:free',
+      messages: [{ role: 'user', content: prompt }],
+      temperature: 0.2,
+    }),
+  });
+
+  if (!openRouterRes.ok) {
+    let message = 'OpenRouter API failed';
+    try {
+      const err = await openRouterRes.json();
+      message = err.error?.message || message;
+    } catch (error) {
+      message = await openRouterRes.text();
+    }
+    console.warn('OpenRouter unavailable, using rule-based alerts:', message);
+    return null;
+  }
+
+  const aiResponse = await openRouterRes.json();
+  const rawContent = aiResponse.choices?.[0]?.message?.content || '[]';
+  const clean = rawContent.replace(/```json|```/g, '').trim();
+  return JSON.parse(clean);
 }
 
 async function runAIAnalysis(req, res) {
@@ -53,6 +172,8 @@ async function runAIAnalysis(req, res) {
         totalKg,
         txCount,
         uniqueDealers,
+        landRecordCount: landRes.data?.length || 0,
+        cropRecordCount: cropRes.data?.length || 0,
         transactions: txList,
       };
     }));
@@ -95,46 +216,35 @@ Return ONLY a JSON array, no explanation:
 
 If no violations found, return: []`;
 
-    // 5. Call OpenRouter API
-    const openRouterRes = await fetch('https://openrouter.ai/api/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${process.env.OPENROUTER_API_KEY}`,
-        'HTTP-Referer': 'http://localhost:5000',
-        'X-Title': 'Fertilizer Distribution Monitor',
-      },
-      body: JSON.stringify({
-        model: 'poolside/laguna-m.1:free',
-        messages: [{ role: 'user', content: prompt }],
-        temperature: 0.2,
-      }),
-    });
-
-    if (!openRouterRes.ok) {
-      const err = await openRouterRes.json();
-      return res.status(500).json({ error: err.error?.message || 'OpenRouter API failed' });
-    }
-
-    const aiResponse = await openRouterRes.json();
-    const rawContent = aiResponse.choices?.[0]?.message?.content || '[]';
-
-    // 6. Parse AI response
-    let alerts = [];
+    // 5. Use OpenRouter when configured; otherwise keep the dashboard useful with local rules.
+    const fallbackAlerts = buildRuleBasedAlerts(farmerProfiles);
+    let alerts = fallbackAlerts;
+    let analysisSource = process.env.OPENROUTER_API_KEY?.trim() ? 'openrouter' : 'rule_engine';
     try {
-      const clean = rawContent.replace(/```json|```/g, '').trim();
-      alerts = JSON.parse(clean);
+      const aiAlerts = await getAIAlerts(prompt);
+      if (aiAlerts) {
+        alerts = aiAlerts;
+      } else {
+        alerts = fallbackAlerts;
+        analysisSource = 'rule_engine';
+      }
     } catch (e) {
-      console.error('Failed to parse AI response:', rawContent);
-      return res.status(500).json({ error: 'AI returned invalid JSON' });
+      console.warn('AI response could not be used, falling back to rule-based alerts:', e.message);
+      alerts = fallbackAlerts;
+      analysisSource = 'rule_engine';
     }
+
+    // 6. Save alerts to Supabase (avoid duplicates by clearing old ones first)
+    await supabase.from('alerts').delete().neq('id', '00000000-0000-0000-0000-000000000000');
 
     if (alerts.length === 0) {
-      return res.status(200).json({ message: 'No anomalies detected', alerts: [] });
+      return res.status(200).json({
+        message: 'No anomalies detected',
+        alerts: [],
+        count: 0,
+        source: analysisSource,
+      });
     }
-
-    // 7. Save alerts to Supabase (avoid duplicates by clearing old ones first)
-    await supabase.from('alerts').delete().neq('id', '00000000-0000-0000-0000-000000000000');
 
     const { data: savedAlerts, error: alertError } = await supabase
       .from('alerts')
@@ -151,7 +261,7 @@ If no violations found, return: []`;
 
     if (alertError) return res.status(500).json({ error: alertError.message });
 
-    return res.status(200).json({ alerts: savedAlerts, count: savedAlerts.length });
+    return res.status(200).json({ alerts: savedAlerts, count: savedAlerts.length, source: analysisSource });
   } catch (error) {
     console.error('AI analysis failed:', error);
     return res.status(500).json({ error: error.message });
