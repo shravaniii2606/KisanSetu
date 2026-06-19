@@ -1,6 +1,7 @@
 const { getSupabaseClient } = require('../supabase');
 
 const scanRecordsTable = process.env.SUPABASE_SCAN_RECORDS_TABLE || 'dealer_scan_records';
+const batchesTable = process.env.SUPABASE_BATCHES_TABLE || 'batches';
 
 function parseDecodedPayload(decodedText) {
   if (!decodedText || typeof decodedText !== 'string') {
@@ -30,7 +31,6 @@ function normalizeScanRecordPayload(body) {
   const changed = typeof body.changed === 'boolean' ? body.changed : null;
   const dealer_id = body.dealer_id || null;
   const dealer_name = body.dealer_name || null;
-  const location = body.location || null;
 
   return {
     decoded_text: decodedText,
@@ -46,7 +46,6 @@ function normalizeScanRecordPayload(body) {
     changed,
     dealer_id,
     dealer_name,
-    location,
   };
 }
 
@@ -101,31 +100,20 @@ async function listScanRecords(req, res) {
 async function getTotalBagsScanned(req, res) {
   try {
     const supabase = getSupabaseClient();
-    // Allow optional filtering by dealer_id and status (defaults to both received and sold)
-    const dealerId = req.query.dealer_id || null;
-    const statusFilter = req.query.status || 'received,sold';
-
-    let query = supabase.from(scanRecordsTable).select('number_of_bags');
-    if (dealerId) query = query.eq('dealer_id', dealerId);
-    if (statusFilter) {
-      const statusValues = statusFilter.split(',').map((status) => status.trim()).filter(Boolean);
-      if (statusValues.length === 1) {
-        query = query.eq('status', statusValues[0]);
-      } else if (statusValues.length > 1) {
-        query = query.in('status', statusValues);
-      }
-    }
-
-    const { data, error } = await query;
+    const { data, error } = await supabase
+      .from(batchesTable)
+      .select('qr_codes');
 
     if (error) return res.status(500).json({ error: error.message });
 
-    const total = data.reduce((sum, row) => {
-      const n = row && (row.number_of_bags === null || row.number_of_bags === undefined)
-        ? 1
-        : Number(row.number_of_bags) || 0;
-      return sum + n;
+    const total = (data || []).reduce((sum, batch) => {
+      const qrCodes = Array.isArray(batch.qr_codes) ? batch.qr_codes : [];
+      return sum + qrCodes.filter((qrCode) => {
+        const status = qrCode?.status === 'receive' ? 'received' : qrCode?.status;
+        return status === 'received' || status === 'sold';
+      }).length;
     }, 0);
+
     return res.status(200).json({ total });
   } catch (error) {
     const causeMessage = error.cause?.message || error.cause?.code || null;
@@ -136,13 +124,18 @@ async function getTotalBagsScanned(req, res) {
 async function getTotalBagsSold(req, res) {
   try {
     const supabase = getSupabaseClient();
-    const dealerId = req.query.dealer_id || null;
-    let query = supabase.from(scanRecordsTable).select('id').eq('status', 'sold');
-    if (dealerId) query = query.eq('dealer_id', dealerId);
-    const { data, error } = await query;
+    const { data, error } = await supabase
+      .from(batchesTable)
+      .select('qr_codes');
 
     if (error) return res.status(500).json({ error: error.message });
-    return res.status(200).json({ total: data.length });
+
+    const total = (data || []).reduce((sum, batch) => {
+      const qrCodes = Array.isArray(batch.qr_codes) ? batch.qr_codes : [];
+      return sum + qrCodes.filter((qrCode) => qrCode?.status === 'sold').length;
+    }, 0);
+
+    return res.status(200).json({ total });
   } catch (error) {
     const causeMessage = error.cause?.message || error.cause?.code || null;
     const details = [error.message, causeMessage].filter(Boolean).join(' | ');

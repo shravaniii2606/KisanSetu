@@ -39,6 +39,16 @@ function normalizeBagId(value) {
   return typeof value === 'string' ? value.trim() : '';
 }
 
+async function createDealerScanRecord(supabase, payload) {
+  const { error } = await supabase
+    .from('dealer_scan_records')
+    .insert([payload]);
+
+  if (error) {
+    throw new Error(`Failed to save dealer scan record: ${error.message}`);
+  }
+}
+
 async function createBatch(req, res) {
   try {
     const payload = normalizeBatchPayload(req.body);
@@ -179,23 +189,20 @@ async function scanBatchBag(req, res) {
         const allReceived = qrCodes.every(qr => qr && qr.status === 'received');
         if (allReceived) {
           // Still save scan record for the dealer
-          await supabase
-            .from('dealer_scan_records')
-            .insert([{
-              decoded_text: JSON.stringify({ batchNumber: batch.batch_number }),
-              decoded_payload: { batchNumber: batch.batch_number },
-              bag_id: null,
-              batch_number: batch.batch_number,
-              product_name: batch.product_name || null,
-              number_of_bags: batch.qr_codes ? batch.qr_codes.length : null,
-              manufacturer: batch.manufacturer || null,
-              bag_weight: batch.bag_weight || null,
-              matched_batch_id: batch.id,
-              dealer_name: req.body.dealer_name || null,
-              location: req.body.location || null,
-              status: 'received',
-              changed: false,
-            }]);
+          await createDealerScanRecord(supabase, {
+            decoded_text: JSON.stringify({ batchNumber: batch.batch_number }),
+            decoded_payload: { batchNumber: batch.batch_number },
+            bag_id: null,
+            batch_number: batch.batch_number,
+            product_name: batch.product_name || null,
+            number_of_bags: batch.qr_codes ? batch.qr_codes.length : null,
+            manufacturer: batch.manufacturer || null,
+            bag_weight: batch.bag_weight || null,
+            matched_batch_id: batch.id,
+            dealer_name: req.body.dealer_name || null,
+            status: 'received',
+            changed: false,
+          });
 
           return res.status(200).json({
             batchNumber: batch.batch_number,
@@ -237,14 +244,11 @@ async function scanBatchBag(req, res) {
           bag_weight: batch.bag_weight || null,
           matched_batch_id: batch.id,
           dealer_name: req.body.dealer_name || null,
-          location: req.body.location || null,
           status: 'received',
           changed,
         };
 
-        await supabase
-          .from('dealer_scan_records')
-          .insert([scanRecordPayload]);
+        await createDealerScanRecord(supabase, scanRecordPayload);
 
         return res.status(200).json({
           batchId: batch.id,
@@ -334,23 +338,20 @@ async function scanBatchBag(req, res) {
 
     if (scannedBy === 'dealer' && nextStatus === 'received' && !changed) {
       // Still save scan record for the dealer
-      await supabase
-        .from('dealer_scan_records')
-        .insert([{
-          decoded_text: JSON.stringify({ bagId }),
-          decoded_payload: { bagId },
-          bag_id: bagId,
-          batch_number: batch.batch_number,
-          product_name: batch.product_name || null,
-          number_of_bags: 1,
-          manufacturer: batch.manufacturer || null,
-          bag_weight: batch.bag_weight || null,
-          matched_batch_id: batch.id,
-          dealer_name: req.body.dealer_name || null,
-          location: req.body.location || null,
-          status: 'received',
-          changed: false,
-        }]);
+      await createDealerScanRecord(supabase, {
+        decoded_text: JSON.stringify({ bagId }),
+        decoded_payload: { bagId },
+        bag_id: bagId,
+        batch_number: batch.batch_number,
+        product_name: batch.product_name || null,
+        number_of_bags: 1,
+        manufacturer: batch.manufacturer || null,
+        bag_weight: batch.bag_weight || null,
+        matched_batch_id: batch.id,
+        dealer_name: req.body.dealer_name || null,
+        status: 'received',
+        changed: false,
+      });
 
       return res.status(200).json({
         bagId,
@@ -394,14 +395,10 @@ async function scanBatchBag(req, res) {
         bag_weight: batch.bag_weight || null,
         matched_batch_id: batch.id,
         dealer_name: req.body.dealer_name || null,
-        location: req.body.location || null,
-        status: nextStatus,
-        changed,
+
       };
 
-      await supabase
-        .from('dealer_scan_records')
-        .insert([scanRecordPayload]);
+      await createDealerScanRecord(supabase, scanRecordPayload);
     }
 
         return res.status(200).json({

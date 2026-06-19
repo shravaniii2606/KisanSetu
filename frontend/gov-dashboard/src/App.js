@@ -620,6 +620,23 @@ function AddPage() {
     }));
   };
 
+  const handleAutofillBatch = () => {
+    setBatchForm({
+      batchNumber: 'BATCH-2025-MH-0047',
+      numberOfBags: '5',
+      productName: 'Urea (46-0-0)',
+      productPrice: '266',
+      productExpiry: '2028-12-31',
+      manufacturer: 'Rashtriya Chemicals & Fertilizers Ltd',
+      bagWeight: '50 kg',
+    });
+    setExpiryError('');
+    setSaveState({ status: 'idle', message: '' });
+    setGeneratedBagIds([]);
+    setGeneratedQRCodes([]);
+    setGeneratedBatchQRCode('');
+  };
+
   const handleGenerateBagIds = async () => {
     const bagCount = Number.parseInt(batchForm.numberOfBags, 10);
     const hasPastExpiry = batchForm.productExpiry && batchForm.productExpiry < todayIsoDate;
@@ -822,6 +839,9 @@ function AddPage() {
         <div className="batch-form-actions full-width">
           <button type="button" className="outline-action" onClick={() => setShowBatchForm(false)}>
             Back
+          </button>
+          <button type="button" className="outline-action" onClick={handleAutofillBatch}>
+            Autofill
           </button>
           <button type="button" className="primary-action" onClick={handleGenerateBagIds}>
             Generate
@@ -2211,8 +2231,8 @@ function App() {
     <div className="dashboard-shell">
       <aside className={`sidebar ${sidebarOpen ? 'is-open' : ''}`}>
         <div className="sidebar-brand">
-          <div className="brand-mark" aria-hidden="true">
-            <div className="brand-mark__inner">GOI</div>
+          <div className="brand-mark" aria-label="KisanSetu logo">
+            <img src={process.env.PUBLIC_URL + '/kisansetu-logo.png'} alt="KisanSetu logo" className="brand-mark__logo" />
           </div>
         </div>
 
