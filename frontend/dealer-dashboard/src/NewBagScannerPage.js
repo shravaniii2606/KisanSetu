@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Html5Qrcode } from 'html5-qrcode';
 
-const API_BASE_URL = "https://fertilizers-oz5a.onrender.com";
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 
 const parseBagPrice = (value) => {
   if (value == null) return 0;
@@ -19,7 +19,7 @@ const parseJson = async (response) => {
   return text ? JSON.parse(text) : {};
 };
 
-export default function NewBagScannerPage({ setCurrentPage, farmerData: initialFarmerData }) {
+export default function NewBagScannerPage({ setCurrentPage, farmerData: initialFarmerData, onPurchaseComplete }) {
   const scannerRef = useRef(null);
   const fileInputRef = useRef(null);
   const scanRequestRef = useRef(false);
@@ -348,6 +348,7 @@ export default function NewBagScannerPage({ setCurrentPage, farmerData: initialF
       setOtpInput('');
       setOtpCountdown(0);
       setScanStatus('Purchase complete');
+      onPurchaseComplete?.();
     }
   };
 

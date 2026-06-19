@@ -1,6 +1,6 @@
 import { Html5Qrcode } from 'html5-qrcode';
 import NewBagScannerPage from './NewBagScannerPage';
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import './App.css';
 
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
@@ -281,7 +281,7 @@ function resizeImage(file, maxDimension) {
 }
 
 function ScannerPage(props) {
-  const { dealerDetails, loadScanRecords } = props;
+  const { dealerDetails, loadScanRecords, loadDashboardStats } = props;
   const scannerRef = useRef(null);
   const fileInputRef = useRef(null);
   const scanRequestRef = useRef(false);
@@ -431,6 +431,7 @@ function ScannerPage(props) {
       // The backend automatically logs the scan to dealer_scan_records now.
       // Refresh local scan records so View Previous reflects the latest data.
       loadScanRecords();
+      loadDashboardStats();
 
     } catch (error) {
       setScanStatus('Scan update failed');
@@ -659,6 +660,7 @@ function App() {
   const [dealerDetails, setDealerDetails] = useState(dealerDetailsByLanguage.en);
   const [isEditingDealer, setIsEditingDealer] = useState(false);
   const [scanRecords, setScanRecords] = useState([]);
+  const [batchScanSummaries, setBatchScanSummaries] = useState([]);
   const [batchTotalsByNumber, setBatchTotalsByNumber] = useState({});
   const [saleHistory, setSaleHistory] = useState([]);
   const [saleHistoryStatus, setSaleHistoryStatus] = useState({ status: 'idle', message: '' });
@@ -749,6 +751,25 @@ function App() {
     setDealerDetails((prev) => ({ ...prev, [field]: value }));
   };
 
+  const loadDashboardStats = useCallback(async () => {
+    fetch(`${API_BASE_URL}/api/farmers/count`)
+      .then(res => res.json())
+      .then(data => setFarmerCount(data.count ?? 0))
+      .catch(() => setFarmerCount(0));
+
+    const dealerQuery = dealerDetails?.id ? `?dealer_id=${encodeURIComponent(dealerDetails.id)}` : '';
+
+    fetch(`${API_BASE_URL}/api/scan-records/total-bags${dealerQuery}`)
+      .then(res => res.json())
+      .then(data => setTotalBagsScanned(data.total ?? 0))
+      .catch(() => setTotalBagsScanned(0));
+
+    fetch(`${API_BASE_URL}/api/scan-records/total-sold${dealerQuery}`)
+      .then(res => res.json())
+      .then(data => setTotalBagsSold(data.total ?? 0))
+      .catch(() => setTotalBagsSold(0));
+  }, [dealerDetails?.id]);
+
   const loadScanRecords = async () => {
     try {
       setRecordsStatus({ status: 'loading', message: 'Loading previous scan records...' });
@@ -769,18 +790,50 @@ function App() {
       }
 
       const records = scanPayload.scanRecords || [];
+      const latestScanByBatch = records.reduce((map, record) => {
+        if (!record.batch_number) return map;
+        const previous = map[record.batch_number];
+        if (!previous || new Date(record.scanned_at) > new Date(previous.scanned_at)) {
+          map[record.batch_number] = record;
+        }
+        return map;
+      }, {});
       const batchTotals = (batchPayload.batches || []).reduce((map, batch) => {
         if (batch && batch.batch_number) {
           map[batch.batch_number] = Number(batch.number_of_bags) || 0;
         }
         return map;
       }, {});
+      const summaries = (batchPayload.batches || [])
+        .map((batch) => {
+          const qrCodes = Array.isArray(batch.qr_codes) ? batch.qr_codes : [];
+          const bagsScanned = qrCodes.filter((qrCode) => {
+            const status = qrCode?.status === 'receive' ? 'received' : qrCode?.status;
+            return status === 'received' || status === 'sold';
+          }).length;
+
+          if (!bagsScanned) return null;
+
+          const latestScan = latestScanByBatch[batch.batch_number];
+          return {
+            id: batch.id,
+            batch_number: batch.batch_number,
+            product_name: batch.product_name,
+            bag_weight: batch.bag_weight,
+            scanned_at: latestScan?.scanned_at || batch.created_at,
+            bagsScanned,
+            totalBags: Number(batch.number_of_bags) || qrCodes.length || bagsScanned,
+          };
+        })
+        .filter(Boolean)
+        .sort((a, b) => new Date(b.scanned_at) - new Date(a.scanned_at));
 
       setBatchTotalsByNumber(batchTotals);
+      setBatchScanSummaries(summaries);
       setScanRecords(records);
       setRecordsStatus({
         status: 'success',
-        message: records.length ? '' : 'No scanned batch records yet.',
+        message: records.length || summaries.length ? '' : 'No scanned batch records yet.',
       });
     } catch (error) {
       setRecordsStatus({
@@ -829,25 +882,9 @@ function App() {
     }
   }
   useEffect(() => {
-    fetch(`${API_BASE_URL}/api/farmers/count`)
-      .then(res => res.json())
-      .then(data => setFarmerCount(data.count ?? 0))
-      .catch(() => setFarmerCount(0));
-
-    const dealerQuery = dealerDetails?.id ? `?dealer_id=${encodeURIComponent(dealerDetails.id)}` : '';
-
-    fetch(`${API_BASE_URL}/api/scan-records/total-bags${dealerQuery}`)
-      .then(res => res.json())
-      .then(data => setTotalBagsScanned(data.total ?? 0))
-      .catch(() => setTotalBagsScanned(0));
-
-    fetch(`${API_BASE_URL}/api/scan-records/total-sold${dealerQuery}`)
-      .then(res => res.json())
-      .then(data => setTotalBagsSold(data.total ?? 0))
-      .catch(() => setTotalBagsSold(0));
-
+    loadDashboardStats();
     loadScanRecords();
-  }, [dealerDetails?.id]);
+  }, [dealerDetails?.id, loadDashboardStats]);
   useEffect(() => {
     if (currentPage === 'previous' || currentPage === 'history') loadScanRecords();
   }, [currentPage]);
@@ -1025,7 +1062,11 @@ function App() {
               </div>
             </header>
 
-            <NewBagScannerPage setCurrentPage={setCurrentPage} farmerData={farmerData} />
+            <NewBagScannerPage
+              setCurrentPage={setCurrentPage}
+              farmerData={farmerData}
+              onPurchaseComplete={loadDashboardStats}
+            />
           </>
         )}
 
@@ -1051,45 +1092,13 @@ function App() {
               )}
 
               {recordsStatus.status === 'success' &&
-                scanRecords.length === 0 && (
+                batchScanSummaries.length === 0 && (
                   <p className="records-message">
                     No scanned records yet.
                   </p>
                 )}
 
-              {scanRecords.length > 0 &&
-                (() => {
-                  // Include both received and sold records
-                  const allRecords = scanRecords.filter(
-                    (r) => r.status === "received" || r.status === "sold"
-                  );
-
-                  const batchMap = {};
-
-                  allRecords.forEach((record) => {
-                    const key = record.batch_number || record.bag_id || record.id;
-                    const batchTotal = Number(record.number_of_bags) || 0;
-                    const actualTotalBags = record.batch_number && batchTotalsByNumber[record.batch_number] != null
-                      ? batchTotalsByNumber[record.batch_number]
-                      : batchTotal || 1;
-
-                    if (!batchMap[key]) {
-                      batchMap[key] = {
-                        ...record,
-                        bagsScanned: batchTotal || 1,
-                        totalBags: actualTotalBags,
-                      };
-                    } else {
-                      batchMap[key].bagsScanned += batchTotal || 1;
-                      batchMap[key].totalBags = Math.max(batchMap[key].totalBags, actualTotalBags);
-                    }
-                  });
-
-                  const batches = Object.values(batchMap).sort(
-                    (a, b) => new Date(b.scanned_at) - new Date(a.scanned_at)
-                  );
-
-                  return (
+              {batchScanSummaries.length > 0 && (
                     <div className="records-table-wrap">
                       <table className="records-table">
                         <thead>
@@ -1104,7 +1113,7 @@ function App() {
                         </thead>
 
                         <tbody>
-                          {batches.map((record) => (
+                          {batchScanSummaries.map((record) => (
                             <tr
                               key={
                                 record.batch_number || record.id
@@ -1131,8 +1140,7 @@ function App() {
                         </tbody>
                       </table>
                     </div>
-                  );
-                })()}
+              )}
             </section>
           </>
         )}
@@ -1147,7 +1155,11 @@ function App() {
                 <p className="subtitle">{texts.scanBatchSubtitle}</p>
               </div>
             </header>
-            <ScannerPage dealerDetails={dealerDetails} loadScanRecords={loadScanRecords} />
+            <ScannerPage
+              dealerDetails={dealerDetails}
+              loadScanRecords={loadScanRecords}
+              loadDashboardStats={loadDashboardStats}
+            />
           </>
         )}
 
