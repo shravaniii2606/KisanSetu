@@ -546,7 +546,7 @@ function PageTitle({ title, subtitle, action, onAction }) {
     <section className="page-title">
       <div>
         <h2>{title}</h2>
-        <p>{subtitle}</p>
+        {subtitle && <p>{subtitle}</p>}
       </div>
       {action && (
         <button type="button" className="outline-action" onClick={onAction}>
@@ -574,9 +574,11 @@ function MetricCard({ icon, label, value, unit, accent }) {
 
 function AddPage() {
   const [showBatchForm, setShowBatchForm] = useState(false);
+  const [showGeneratedQrPage, setShowGeneratedQrPage] = useState(false);
   const [generatedBagIds, setGeneratedBagIds] = useState([]);
   const [generatedQRCodes, setGeneratedQRCodes] = useState([]);
   const [generatedBatchQRCode, setGeneratedBatchQRCode] = useState('');
+  const [generatedBatchDetails, setGeneratedBatchDetails] = useState(null);
   const [saveState, setSaveState] = useState({ status: 'idle', message: '' });
   const [expiryError, setExpiryError] = useState('');
   const [batchForm, setBatchForm] = useState({
@@ -604,6 +606,10 @@ function AddPage() {
 
     if (generatedBatchQRCode) {
       setGeneratedBatchQRCode('');
+    }
+
+    if (showGeneratedQrPage) {
+      setShowGeneratedQrPage(false);
     }
 
     if (name === 'productExpiry') {
@@ -635,6 +641,8 @@ function AddPage() {
     setGeneratedBagIds([]);
     setGeneratedQRCodes([]);
     setGeneratedBatchQRCode('');
+    setGeneratedBatchDetails(null);
+    setShowGeneratedQrPage(false);
   };
 
   const handleGenerateBagIds = async () => {
@@ -651,6 +659,8 @@ function AddPage() {
       setGeneratedBagIds([]);
       setGeneratedQRCodes([]);
       setGeneratedBatchQRCode('');
+      setGeneratedBatchDetails(null);
+      setShowGeneratedQrPage(false);
       setSaveState({ status: 'error', message: 'Enter a valid number of bags before generating.' });
       return;
     }
@@ -726,6 +736,12 @@ function AddPage() {
       if (!saveResponse.ok) {
         throw new Error(saveResult.error || 'Unable to save batch.');
       }
+      setGeneratedBatchDetails({
+        batchNumber: batchForm.batchNumber,
+        numberOfBags: batchForm.numberOfBags,
+        productName: batchForm.productName,
+      });
+      setShowGeneratedQrPage(true);
       setSaveState({ status: 'success', message: 'Batch saved to Supabase and QR codes generated successfully.' });
     } catch (error) {
       setSaveState({
@@ -752,6 +768,60 @@ function AddPage() {
             <span>+</span>
           </button>
         </div>
+      </section>
+    );
+  }
+
+  if (showGeneratedQrPage) {
+    const qrBatchDetails = generatedBatchDetails || batchForm;
+
+    return (
+      <section className="page-content">
+        <PageTitle
+          title="Generated QR Codes"
+          action="Back to Add Batch"
+          onAction={() => setShowGeneratedQrPage(false)}
+        />
+
+        {generatedBatchQRCode && (
+          <section className="generated-panel qr-panel batch-qr-panel">
+            <div className="generated-panel__header">
+              <h3>Batch QR Code</h3>
+              <p>This QR code contains all batch-level details, including total bags, price, and expiry.</p>
+            </div>
+            <div className="batch-qr-container">
+              <article className="generated-bag-card qr-card batch-qr-card">
+                <img src={generatedBatchQRCode} alt={`QR for batch ${qrBatchDetails.batchNumber}`} className="qr-image batch-qr-image" />
+                <strong>Batch: {qrBatchDetails.batchNumber}</strong>
+                <small>Includes: {qrBatchDetails.numberOfBags} Bags</small>
+                {qrBatchDetails.productName && <span className="batch-qr-info">Product: {qrBatchDetails.productName}</span>}
+                <a href={generatedBatchQRCode} download={`BATCH-${qrBatchDetails.batchNumber}.png`} className="table-action qr-download">
+                  Download Batch QR
+                </a>
+              </article>
+            </div>
+          </section>
+        )}
+
+        {generatedQRCodes.length > 0 && (
+          <section className="generated-panel qr-panel">
+            <div className="generated-panel__header">
+              <h3>Bag QR Codes</h3>
+              <p>Each bag has its own QR code linked to the generated bag ID.</p>
+            </div>
+            <div className="generated-bag-grid qr-grid">
+              {generatedQRCodes.map((qrCode) => (
+                <article key={qrCode.bagId} className="generated-bag-card qr-card">
+                  <img src={qrCode.qrCodeDataUrl} alt={`QR for ${qrCode.bagId}`} className="qr-image" />
+                  <strong>{qrCode.bagId}</strong>
+                  <a href={qrCode.qrCodeDataUrl} download={`${qrCode.bagId}.png`} className="table-action qr-download">
+                    Download QR
+                  </a>
+                </article>
+              ))}
+            </div>
+          </section>
+        )}
       </section>
     );
   }
@@ -848,46 +918,6 @@ function AddPage() {
           </button>
         </div>
       </div>
-
-      {generatedBatchQRCode && (
-        <section className="generated-panel qr-panel batch-qr-panel">
-          <div className="generated-panel__header">
-            <h3>Batch QR Code</h3>
-            <p>This QR code contains all batch-level details (including total bags, price, and expiry) and can be scanned to view or process the entire batch.</p>
-          </div>
-          <div className="batch-qr-container" style={{ display: 'flex', justifyContent: 'center', margin: '20px 0' }}>
-            <article className="generated-bag-card qr-card batch-qr-card" style={{ maxWidth: '280px', width: '100%', textAlign: 'center', padding: '20px', borderRadius: '12px', border: '1px solid rgba(255, 255, 255, 0.1)' }}>
-              <img src={generatedBatchQRCode} alt={`QR for batch ${batchForm.batchNumber}`} className="qr-image batch-qr-image" style={{ width: '100%', height: 'auto', marginBottom: '15px', borderRadius: '8px' }} />
-              <strong style={{ display: 'block', fontSize: '1.1rem', marginBottom: '5px' }}>Batch: {batchForm.batchNumber}</strong>
-              <small style={{ display: 'block', color: 'rgba(255, 255, 255, 0.6)', marginBottom: '5px' }}>Includes: {batchForm.numberOfBags} Bags</small>
-              {batchForm.productName && <span className="batch-qr-info" style={{ display: 'block', fontSize: '0.9rem', marginBottom: '15px' }}>Product: {batchForm.productName}</span>}
-              <a href={generatedBatchQRCode} download={`BATCH-${batchForm.batchNumber}.png`} className="table-action qr-download" style={{ display: 'inline-block', width: '100%', padding: '10px', borderRadius: '6px', textDecoration: 'none', fontWeight: 'bold' }}>
-                Download Batch QR
-              </a>
-            </article>
-          </div>
-        </section>
-      )}
-
-      {generatedQRCodes.length > 0 && (
-        <section className="generated-panel qr-panel">
-          <div className="generated-panel__header">
-            <h3>Bag QR Codes</h3>
-            <p>Each bag now has its own QR code linked to the generated bag ID.</p>
-          </div>
-          <div className="generated-bag-grid qr-grid">
-            {generatedQRCodes.map((qrCode) => (
-              <article key={qrCode.bagId} className="generated-bag-card qr-card">
-                <img src={qrCode.qrCodeDataUrl} alt={`QR for ${qrCode.bagId}`} className="qr-image" />
-                <strong>{qrCode.bagId}</strong>
-                <a href={qrCode.qrCodeDataUrl} download={`${qrCode.bagId}.png`} className="table-action qr-download">
-                  Download QR
-                </a>
-              </article>
-            ))}
-          </div>
-        </section>
-      )}
 
       {saveState.status !== 'idle' && (
         <p className={`form-hint form-hint--${saveState.status}`}>{saveState.message}</p>
