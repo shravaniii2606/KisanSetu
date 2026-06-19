@@ -1,0 +1,227 @@
+.farmer-shell {
+  min-height: 100vh;
+  display: grid;
+  grid-template-columns: 260px minmax(0, 1fr);
+  background: #f6fbf4;
+}
+
+.sidebar {
+  background: #10391f;
+  color: #eefbf1;
+  padding: 24px 22px;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 28px;
+}
+
+.brand-mark {
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
+  display: grid;
+  place-items: center;
+  background: #48b86f;
+  color: #ffffff;
+  font-weight: 800;
+  font-size: 22px;
+}
+
+.brand h1 {
+  margin: 0;
+  font-size: 21px;
+}
+
+.brand p {
+  margin: 2px 0 0;
+  color: #bde8c9;
+  font-size: 13px;
+}
+
+.nav-menu {
+  display: grid;
+  gap: 10px;
+}
+
+.nav-item {
+  width: 100%;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: #ddf5e3;
+  cursor: pointer;
+  padding: 14px 16px;
+  text-align: left;
+}
+
+.nav-item:hover,
+.nav-item.active {
+  background: rgba(255, 255, 255, 0.14);
+  color: #ffffff;
+}
+
+.main-panel {
+  padding: 32px;
+}
+
+.page-header {
+  background: #ffffff;
+  border: 1px solid #dbe9dc;
+  border-radius: 8px;
+  padding: 26px 28px;
+  margin-bottom: 24px;
+  box-shadow: 0 10px 28px rgba(16, 57, 31, 0.08);
+}
+
+.eyebrow {
+  margin: 0 0 10px;
+  color: #2d7b45;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0;
+  text-transform: uppercase;
+}
+
+.page-header h2 {
+  margin: 0;
+  font-size: 34px;
+}
+
+.page-header p:last-child {
+  margin: 12px 0 0;
+  color: #52655a;
+  line-height: 1.6;
+}
+
+.home-grid,
+.summary-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 18px;
+  margin-bottom: 24px;
+}
+
+.home-card,
+.summary-card {
+  border: 1px solid #dbe9dc;
+  border-radius: 8px;
+  background: #ffffff;
+  padding: 24px;
+  text-align: left;
+  box-shadow: 0 10px 28px rgba(16, 57, 31, 0.08);
+}
+
+.home-card {
+  cursor: pointer;
+}
+
+.home-card span,
+.summary-card span {
+  display: block;
+  color: #52655a;
+  font-weight: 700;
+  margin-bottom: 12px;
+}
+
+.home-card strong,
+.summary-card strong {
+  font-size: 30px;
+  color: #10391f;
+}
+
+.records-panel {
+  background: #ffffff;
+  border: 1px solid #dbe9dc;
+  border-radius: 8px;
+  padding: 22px;
+  box-shadow: 0 10px 28px rgba(16, 57, 31, 0.08);
+}
+
+.records-toolbar {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
+.records-toolbar input,
+.records-toolbar select {
+  border: 1px solid #bfd6c4;
+  border-radius: 8px;
+  padding: 12px 14px;
+  background: #ffffff;
+  color: #102015;
+}
+
+.records-toolbar input {
+  flex: 1;
+  min-width: 180px;
+}
+
+.records-table-wrap {
+  overflow-x: auto;
+}
+
+.records-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 920px;
+}
+
+.records-table th,
+.records-table td {
+  border-bottom: 1px solid #e5efe6;
+  padding: 14px 12px;
+  text-align: left;
+  white-space: nowrap;
+}
+
+.records-table th {
+  color: #52655a;
+  font-size: 13px;
+  text-transform: uppercase;
+}
+
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 104px;
+  border-radius: 999px;
+  padding: 7px 10px;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.status-pill.is-green {
+  background: #e6f8ec;
+  color: #166534;
+}
+
+.status-pill.is-orange {
+  background: #fff4e5;
+  color: #9a4b00;
+}
+
+@media (max-width: 900px) {
+  .farmer-shell {
+    grid-template-columns: 1fr;
+  }
+
+  .home-grid,
+  .summary-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 640px) {
+  .main-panel {
+    padding: 18px;
+  }
+
+  .records-toolbar {
+    flex-direction: column;
+  }
+}

@@ -1,0 +1,16 @@
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  background: #f6fbf4;
+  color: #102015;
+}
+
+button,
+input,
+select {
+  font: inherit;
+}
