@@ -893,7 +893,9 @@ function App() {
     <div className="dealer-dashboard">
       <aside className={`sidebar ${isSidebarOpen ? 'mobile-open' : ''}`}>
         <div className="brand">
-          <div className="brand-mark">F</div>
+          <div className="brand-mark">
+            <img src={process.env.PUBLIC_URL + '/kisansetu-logo.png'} alt="KisanSetu logo" className="brand-mark__logo" />
+          </div>
           <div>
             <h1>{texts.brandTitle}</h1>
             <p>{texts.brandLabel}</p>
