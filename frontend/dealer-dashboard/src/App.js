@@ -6,7 +6,7 @@ import AppTour from './components/AppTour';
 import { useTour } from './hooks/useTour';
 import { PORTAL_URLS } from './portalUrls';
 
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+const API_BASE_URL = process.env.REACT_APP_API_URL || "https://kisansetu-1-mxvc.onrender.com/";
 
 function goToGovPortal() {
   window.location.href = `${PORTAL_URLS.gov}?view=dashboard`;
