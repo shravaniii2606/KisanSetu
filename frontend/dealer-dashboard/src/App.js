@@ -2,8 +2,24 @@ import { Html5Qrcode } from 'html5-qrcode';
 import NewBagScannerPage from './NewBagScannerPage';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import './App.css';
+import { PORTAL_URLS } from './portalUrls';
 
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+
+function goToGovPortal() {
+  window.location.href = `${PORTAL_URLS.gov}?view=dashboard`;
+}
+
+function goToDealerPortal() {
+  window.location.href = `${PORTAL_URLS.dealer}?view=dashboard`;
+}
+
+function getInitialEntryView() {
+  const params = new URLSearchParams(window.location.search);
+  return params.get('view') === 'dashboard' || window.location.hash === '#dashboard'
+    ? 'dashboard'
+    : 'landing';
+}
 
 function parseDecodedPayload(decodedText) {
   try {
@@ -623,7 +639,197 @@ function ScannerPage(props) {
   );
 }
 
+function LandingPage({ onLaunch }) {
+  return (
+    <div className="landing-page">
+      <header className="landing-nav">
+        <a className="landing-brand" href="#home" aria-label="KisanSetu home">
+          <img src={process.env.PUBLIC_URL + '/kisansetu-logo.png'} alt="" />
+          <span>
+            <strong>KisanSetu</strong>
+          </span>
+        </a>
+      </header>
+
+      <main id="home">
+        <section className="landing-hero">
+          <div className="hero-bg-grid" aria-hidden="true" />
+          <div className="hero-copy-panel">
+            <p className="hero-kicker">Verified fertilizer distribution</p>
+            <h1>
+              Every Fertilizer Bag <span>Verified.</span><br />
+              Every Transaction <span>Transparent.</span>
+            </h1>
+            <p>
+              KisanSetu ensures tamper-proof fertilizer distribution with unique QR identity,
+              government seals, and real-time tracking to protect farmers and stop black-market sales.
+            </p>
+            <div className="hero-actions">
+              <button type="button" className="hero-primary" onClick={onLaunch}>
+                Launch Platform <span aria-hidden="true">-&gt;</span>
+              </button>
+              <a className="hero-secondary" href="#how-it-works">
+                <span aria-hidden="true">▶</span> Watch Demo
+              </a>
+            </div>
+            <div className="trusted-row" aria-label="KisanSetu adoption">
+              <span>RS</span>
+              <span>AM</span>
+              <span>PK</span>
+              <span>NV</span>
+              <p>Trusted by 500+ Dealers &amp; 10,000+ Farmers across India</p>
+            </div>
+          </div>
+
+          <div className="hero-product-stage" aria-label="Verified urea bag and mobile scan preview">
+            <div className="bag-visual">
+              <div className="bag-top" />
+              <strong>UREA</strong>
+              <span>NITROGEN 46%</span>
+              <div className="seal">Government<br />Verified</div>
+              <div className="qr-code" aria-hidden="true">
+                {Array.from({ length: 25 }).map((_, index) => (
+                  <i key={index} />
+                ))}
+              </div>
+              <small>Batch No: B2026-001<br />Serial No: 000457</small>
+            </div>
+            <div className="phone-visual">
+              <div className="phone-speaker" />
+              <div className="phone-screen">
+                <div className="scan-success">Scan Successful</div>
+                <div className="receipt-card">
+                  <span>Product</span><strong>Urea</strong>
+                  <span>Batch No.</span><strong>B2026-001</strong>
+                  <span>Serial No.</span><strong>000457</strong>
+                  <span>MRP</span><strong>Rs 1200</strong>
+                  <span>Status</span><strong className="authentic">Authentic</strong>
+                </div>
+                <button type="button">Pay Now</button>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section className="feature-strip" id="features">
+          {[
+            ['QR', 'Unique QR Code', 'Every bag has a unique digital identity.'],
+            ['S', 'Serial Verification', 'Each bag is individually verifiable.'],
+            ['G', 'Govt. Authentication Seal', 'Tamper-proof seal prevents duplication.'],
+            ['L', 'Tamper-Proof Packaging', 'Prevents product removal before purchase.'],
+            ['R', 'Real-time Tracking', 'Live updates to government dashboard.'],
+          ].map(([icon, title, text]) => (
+            <article key={title}>
+              <span>{icon}</span>
+              <div>
+                <h2>{title}</h2>
+                <p>{text}</p>
+              </div>
+            </article>
+          ))}
+        </section>
+
+        <section className="how-section" id="how-it-works">
+          <div>
+            <p className="section-kicker">How it works</p>
+            <h2>End-to-End Transparency</h2>
+            <div className="workflow">
+              {['Manufacturer', 'Dealer Receives', 'Farmer Scans QR', 'Payment Confirmed', 'Govt. Dashboard'].map((step, index) => (
+                <article key={step}>
+                  <span>{index + 1}</span>
+                  <strong>{step}</strong>
+                  <p>{index === 0 ? 'System creates unique QR, batch and serial identity.' : index === 1 ? 'Dealer scans batch for verified delivery.' : index === 2 ? 'Farmer gets bag details, price and authenticity.' : index === 3 ? 'Farmer confirms purchase after validation.' : 'All data records in real time after payment.'}</p>
+                </article>
+              ))}
+            </div>
+          </div>
+          <aside className="scan-demo-card ai-demo-card" id="security">
+            <div className="demo-phone ai-orbit" aria-hidden="true">
+              <div className="ai-core" />
+            </div>
+            <h2>AI Fraud Intelligence</h2>
+            <p>KisanSetu uses AI to flag suspicious purchases, dealer stock mismatches, duplicate scans, and unusual fertilizer demand patterns before they become larger issues.</p>
+          </aside>
+        </section>
+      </main>
+    </div>
+  );
+}
+
+function PortalSelectionPage({ onSelectPortal }) {
+  const portals = [
+    {
+      id: 'government',
+      title: 'Government Portal',
+      subtitle: 'For Government Officials',
+      tone: 'green',
+      initials: 'GOV',
+      points: ['Monitor distribution in real-time', 'Track transactions and detect fraud', 'Generate reports and analytics'],
+    },
+    {
+      id: 'dealer',
+      title: 'Dealer Portal',
+      subtitle: 'For Dealers & Distributors',
+      tone: 'blue',
+      initials: 'DLR',
+      points: ['Verify received batches', 'Scan and manage fertilizer bags', 'Track inventory and sales'],
+    },
+  ];
+
+  return (
+    <main className="portal-page">
+      <section className="portal-intro">
+        <a className="portal-brand" href="#home" aria-label="KisanSetu home">
+          <img src={process.env.PUBLIC_URL + '/kisansetu-logo.png'} alt="" />
+          <span>
+            <strong>KisanSetu</strong>
+            <small>Secure. Transparent. Trusted.</small>
+          </span>
+        </a>
+
+        <div className="portal-welcome">
+          <h1>Welcome to <span>KisanSetu</span></h1>
+          <p>A secure platform for fertilizer distribution tracking, verification and transparency.</p>
+          <ul>
+            <li>Track every fertilizer bag in real-time</li>
+            <li>Prevent fraud and black market sales</li>
+            <li>Ensure farmers get the right price</li>
+          </ul>
+        </div>
+      </section>
+
+      <section className="portal-panel" aria-labelledby="portal-title">
+        <div className="portal-heading">
+          <h2 id="portal-title">Choose Your Portal</h2>
+          <p>Select the portal to continue</p>
+        </div>
+
+        <div className="portal-card-grid">
+          {portals.map((portal) => (
+            <article className={`portal-card portal-card--${portal.tone}`} key={portal.id}>
+              <span className="portal-card-icon">{portal.initials}</span>
+              <h3>{portal.title}</h3>
+              <p>{portal.subtitle}</p>
+              <ul>
+                {portal.points.map((point) => (
+                  <li key={point}>{point}</li>
+                ))}
+              </ul>
+              <button type="button" onClick={() => onSelectPortal(portal.id)}>
+                Continue <span aria-hidden="true">-&gt;</span>
+              </button>
+            </article>
+          ))}
+        </div>
+
+        <p className="portal-trust">Secure &middot; Verified &middot; Transparent</p>
+      </section>
+    </main>
+  );
+}
+
 function App() {
+  const [entryView, setEntryView] = useState(getInitialEntryView);
   const [currentPage, setCurrentPage] = useState('dashboard');
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const dealerDetailsByLanguage = {
@@ -888,6 +1094,23 @@ function App() {
   useEffect(() => {
     if (currentPage === 'previous' || currentPage === 'history') loadScanRecords();
   }, [currentPage]);
+
+  function handlePortalSelect(portal) {
+    if (portal === 'dealer') {
+      goToDealerPortal();
+      return;
+    }
+
+    goToGovPortal();
+  }
+
+  if (entryView === 'landing') {
+    return <LandingPage onLaunch={() => setEntryView('portal')} />;
+  }
+
+  if (entryView === 'portal') {
+    return <PortalSelectionPage onSelectPortal={handlePortalSelect} />;
+  }
 
   return (
     <div className="dealer-dashboard">
