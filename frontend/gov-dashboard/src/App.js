@@ -1,6 +1,8 @@
 import { Html5Qrcode } from 'html5-qrcode';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import './App.css';
+import AppTour from './components/AppTour';
+import { useTour } from './hooks/useTour';
 import mockFarmerRecords from './mockFarmerRecords';
 import { PORTAL_URLS } from './portalUrls';
 
@@ -20,6 +22,58 @@ function getInitialEntryView() {
     ? 'dashboard'
     : 'landing';
 }
+
+const governmentTourSteps = [
+  {
+    element: '[data-tour="gov-dashboard"]',
+    popover: {
+      title: 'Dashboard',
+      description: 'This is your main screen. Here you can quickly see what is happening in the fertilizer distribution system.',
+    },
+  },
+  {
+    element: '[data-tour="gov-add"]',
+    popover: {
+      title: 'Add',
+      description: 'Use this page to add a new fertilizer batch into the system.',
+    },
+  },
+  {
+    element: '[data-tour="gov-records"]',
+    popover: {
+      title: 'View Previous',
+      description: 'Here you can see all previously added batches and their details.',
+    },
+  },
+  {
+    element: '[data-tour="gov-alerts"]',
+    popover: {
+      title: 'Alerts',
+      description: 'If there is any suspicious activity or problem, it will appear here.',
+    },
+  },
+  {
+    element: '[data-tour="gov-farmers"]',
+    popover: {
+      title: 'Farmer Records',
+      description: 'This page shows which farmer bought which fertilizer bag.',
+    },
+  },
+  {
+    element: '[data-tour="gov-scanner"]',
+    popover: {
+      title: 'Scanner',
+      description: 'Scan a fertilizer bag here to verify it and view its information.',
+    },
+  },
+  {
+    element: '[data-tour="gov-tour-end"]',
+    popover: {
+      title: 'Done',
+      description: "You're all set! You now know how to use the app.",
+    },
+  },
+];
 
 const navItems = [
   { id: 'dashboard', label: 'Dashboard', icon: 'grid' },
@@ -518,7 +572,7 @@ function useDashboardMetrics() {
   return metrics;
 }
 
-function DashboardPage({ activeSection, setActiveSection, metrics }) {
+function DashboardPage({ activeSection, setActiveSection, metrics, onRestartTour }) {
   const dashboardStats = statCards.map((stat) => (
     Object.prototype.hasOwnProperty.call(metrics, stat.id)
       ? { ...stat, value: metrics[stat.id] === null ? '...' : formatCount(metrics[stat.id]) }
@@ -527,9 +581,12 @@ function DashboardPage({ activeSection, setActiveSection, metrics }) {
 
   return (
     <>
-      <section className="hero-copy">
-        <h2>Dashboard</h2>
-        <p>Welcome, Admin</p>
+      <section className="hero-copy" data-tour="gov-dashboard">
+        <div>
+          <h2>Dashboard</h2>
+          <p>Welcome, Admin</p>
+        </div>
+        <AppTour onRestart={onRestartTour} />
       </section>
 
       <section className="stats-panel">
@@ -2488,6 +2545,7 @@ function App() {
   const [activeSection, setActiveSection] = useState('dashboard');
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const metrics = useDashboardMetrics();
+  const { restartTour } = useTour(governmentTourSteps, { enabled: entryView === 'dashboard' });
 
   const activeDetail = useMemo(
     () => detailContent[activeSection] || detailContent.dashboard,
@@ -2513,7 +2571,7 @@ function App() {
 
   return (
     <div className="dashboard-shell">
-      <aside className={`sidebar ${sidebarOpen ? 'is-open' : ''}`}>
+      <aside className={`sidebar ${sidebarOpen ? 'is-open' : ''}`} data-tour="gov-sidebar">
         <div className="sidebar-brand">
           <div className="brand-mark" aria-label="KisanSetu logo">
             <img src={process.env.PUBLIC_URL + '/kisansetu-logo.png'} alt="KisanSetu logo" className="brand-mark__logo" />
@@ -2526,6 +2584,7 @@ function App() {
               key={item.id}
               type="button"
               className={`sidebar-link ${activeSection === item.id ? 'is-active' : ''}`}
+              data-tour={item.id === 'dashboard' ? 'gov-dashboard-nav' : `gov-${item.id}`}
               onClick={() => {
                 setActiveSection(item.id);
                 setSidebarOpen(false);
@@ -2553,24 +2612,31 @@ function App() {
             <p>Fertilizer Distribution Monitoring System</p>
           </div>
 
-          <button
-            type="button"
-            className="profile-chip"
-            onClick={() => setActiveSection('dashboard')}
-            aria-label="Admin profile"
-          >
-            <span className="profile-chip__icon">
-              <Icon type="user" />
-            </span>
-            <span>Admin</span>
-            <span className="profile-chip__chevron">
-              <Icon type="chevron" />
-            </span>
-          </button>
+          <div className="topbar-actions">
+            <button
+              type="button"
+              className="profile-chip"
+              onClick={() => setActiveSection('dashboard')}
+              aria-label="Admin profile"
+            >
+              <span className="profile-chip__icon">
+                <Icon type="user" />
+              </span>
+              <span>Admin</span>
+              <span className="profile-chip__chevron">
+                <Icon type="chevron" />
+              </span>
+            </button>
+          </div>
         </header>
 
         {activeSection === 'dashboard' && (
-          <DashboardPage activeSection={activeSection} setActiveSection={setActiveSection} metrics={metrics} />
+          <DashboardPage
+            activeSection={activeSection}
+            setActiveSection={setActiveSection}
+            metrics={metrics}
+            onRestartTour={restartTour}
+          />
         )}
         {activeSection === 'add' && <AddPage />}
         {activeSection === 'records' && <PreviousPage />}
@@ -2633,6 +2699,7 @@ function App() {
         )}
 
         <footer className="footer-note">(c) 2025 Government of India. All rights reserved.</footer>
+        <span data-tour="gov-tour-end" className="tour-end-anchor" aria-hidden="true" />
       </main>
     </div>
   );

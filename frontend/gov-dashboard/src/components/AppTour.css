@@ -1,0 +1,56 @@
+.tour-again-button {
+  border: 1px solid rgba(22, 163, 74, 0.26);
+  border-radius: 999px;
+  background: linear-gradient(135deg, #15803d 0%, #16a34a 100%);
+  color: #ffffff;
+  cursor: pointer;
+  font-size: 0.86rem;
+  font-weight: 800;
+  letter-spacing: 0;
+  padding: 0.72rem 1rem;
+  box-shadow: 0 12px 24px rgba(21, 128, 61, 0.18);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.tour-again-button:hover,
+.tour-again-button:focus-visible {
+  transform: translateY(-1px);
+  box-shadow: 0 16px 28px rgba(21, 128, 61, 0.24);
+}
+
+.kisansetu-tour-popover {
+  border: 1px solid rgba(22, 163, 74, 0.18);
+  border-radius: 8px;
+  background: #f7fee7;
+  box-shadow: 0 24px 60px rgba(15, 23, 42, 0.24);
+  color: #14532d;
+  font-family: inherit;
+}
+
+.kisansetu-tour-popover .driver-popover-title {
+  color: #14532d;
+  font-size: 1rem;
+  font-weight: 900;
+}
+
+.kisansetu-tour-popover .driver-popover-description {
+  color: #365314;
+  font-size: 0.94rem;
+  line-height: 1.55;
+}
+
+.kisansetu-tour-popover .driver-popover-next-btn,
+.kisansetu-tour-popover .driver-popover-done-btn {
+  border: 0;
+  border-radius: 999px;
+  background: #15803d;
+  color: #ffffff;
+  font-weight: 800;
+  text-shadow: none;
+}
+
+.kisansetu-tour-popover .driver-popover-close-btn {
+  color: #166534;
+  font-size: 0.82rem;
+  font-weight: 800;
+}

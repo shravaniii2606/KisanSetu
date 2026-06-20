@@ -253,6 +253,15 @@
   color: var(--text-primary);
 }
 
+.tour-end-anchor {
+  position: fixed;
+  right: 24px;
+  bottom: 24px;
+  width: 1px;
+  height: 1px;
+  pointer-events: none;
+}
+
 /* Layout section content */
 .section {
   padding: 0;
@@ -498,6 +507,12 @@
   display: flex;
   gap: 12px;
   margin-bottom: 24px;
+}
+
+.settings-tour-action {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 18px;
 }
 
 .settings-tab,

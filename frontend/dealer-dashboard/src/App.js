@@ -2,6 +2,8 @@ import { Html5Qrcode } from 'html5-qrcode';
 import NewBagScannerPage from './NewBagScannerPage';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import './App.css';
+import AppTour from './components/AppTour';
+import { useTour } from './hooks/useTour';
 import { PORTAL_URLS } from './portalUrls';
 
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
@@ -20,6 +22,58 @@ function getInitialEntryView() {
     ? 'dashboard'
     : 'landing';
 }
+
+const dealerTourSteps = [
+  {
+    element: '[data-tour="dealer-dashboard"]',
+    popover: {
+      title: 'Dashboard',
+      description: 'This is your main screen. It shows your recent activities.',
+    },
+  },
+  {
+    element: '[data-tour="dealer-scan"]',
+    popover: {
+      title: 'Scan Batch',
+      description: 'Scan received batches here to make sure all fertilizer bags have arrived.',
+    },
+  },
+  {
+    element: '[data-tour="dealer-previous"]',
+    popover: {
+      title: 'Transaction History',
+      description: 'See all your previous scans and sales here.',
+    },
+  },
+  {
+    element: '[data-tour="dealer-sell"]',
+    popover: {
+      title: 'Sell',
+      description: 'Use this page when selling a fertilizer bag to a farmer.',
+    },
+  },
+  {
+    element: '[data-tour="dealer-history"]',
+    popover: {
+      title: 'Batches Scanned',
+      description: 'See all batches that you have already received.',
+    },
+  },
+  {
+    element: '[data-tour="dealer-settings"]',
+    popover: {
+      title: 'Settings',
+      description: 'Manage your account and preferences here.',
+    },
+  },
+  {
+    element: '[data-tour="dealer-tour-end"]',
+    popover: {
+      title: 'Done',
+      description: "You're all set! You now know how to use the app.",
+    },
+  },
+];
 
 function parseDecodedPayload(decodedText) {
   try {
@@ -832,6 +886,7 @@ function App() {
   const [entryView, setEntryView] = useState(getInitialEntryView);
   const [currentPage, setCurrentPage] = useState('dashboard');
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const { restartTour } = useTour(dealerTourSteps, { enabled: entryView === 'dashboard' });
   const dealerDetailsByLanguage = {
     en: {
       name: 'Raj Singh Dealer',
@@ -1114,7 +1169,7 @@ function App() {
 
   return (
     <div className="dealer-dashboard">
-      <aside className={`sidebar ${isSidebarOpen ? 'mobile-open' : ''}`}>
+      <aside className={`sidebar ${isSidebarOpen ? 'mobile-open' : ''}`} data-tour="dealer-sidebar">
         <div className="brand">
           <div className="brand-mark">
             <img src={process.env.PUBLIC_URL + '/kisansetu-logo.png'} alt="KisanSetu logo" className="brand-mark__logo" />
@@ -1126,13 +1181,13 @@ function App() {
         </div>
 
         <nav className="nav-menu">
-          <button className={`nav-item ${currentPage === 'dashboard' ? 'active' : ''}`} onClick={() => handleNavigate('dashboard')}>{texts.sidebarDashboard}</button>
-          <button className={`nav-item ${currentPage === 'scan' ? 'active' : ''}`} onClick={() => handleNavigate('scan')}>{texts.sidebarScan}</button>
-          <button className={`nav-item ${currentPage === 'previous' ? 'active' : ''}`} onClick={() => handleNavigate('previous')}>{texts.sidebarPrevious}</button>
-          <button className={`nav-item ${currentPage === 'sell' ? 'active' : ''}`} onClick={() => handleNavigate('sell')}>{texts.sidebarSell}</button>
-          <button className={`nav-item ${currentPage === 'history' ? 'active' : ''}`} onClick={() => handleNavigate('history')}>{texts.sidebarHistory}</button>
+          <button className={`nav-item ${currentPage === 'dashboard' ? 'active' : ''}`} data-tour="dealer-dashboard-nav" onClick={() => handleNavigate('dashboard')}>{texts.sidebarDashboard}</button>
+          <button className={`nav-item ${currentPage === 'scan' ? 'active' : ''}`} data-tour="dealer-scan" onClick={() => handleNavigate('scan')}>{texts.sidebarScan}</button>
+          <button className={`nav-item ${currentPage === 'previous' ? 'active' : ''}`} data-tour="dealer-previous" onClick={() => handleNavigate('previous')}>{texts.sidebarPrevious}</button>
+          <button className={`nav-item ${currentPage === 'sell' ? 'active' : ''}`} data-tour="dealer-sell" onClick={() => handleNavigate('sell')}>{texts.sidebarSell}</button>
+          <button className={`nav-item ${currentPage === 'history' ? 'active' : ''}`} data-tour="dealer-history" onClick={() => handleNavigate('history')}>{texts.sidebarHistory}</button>
 
-          <button className={`nav-item ${currentPage === 'settings' ? 'active' : ''}`} onClick={() => handleNavigate('settings')}>{texts.sidebarSettings}</button>
+          <button className={`nav-item ${currentPage === 'settings' ? 'active' : ''}`} data-tour="dealer-settings" onClick={() => handleNavigate('settings')}>{texts.sidebarSettings}</button>
         </nav>
       </aside>
 
@@ -1152,7 +1207,7 @@ function App() {
         </button>
         {currentPage === 'dashboard' && (
           <>
-            <header className="top-bar">
+            <header className="top-bar" data-tour="dealer-dashboard">
               <div>
                 <p className="page-label">{texts.pageLabel}</p>
                 <h2>{texts.fertilizerDistribution}</h2>
@@ -1167,6 +1222,7 @@ function App() {
                   <strong>{texts.governmentDataActive}</strong>
                 </div>
               </div>
+              <AppTour onRestart={restartTour} />
             </header>
 
             <section className="section stats-row">
@@ -1611,6 +1667,7 @@ function App() {
             </section>
           </>
         )}
+        <span data-tour="dealer-tour-end" className="tour-end-anchor" aria-hidden="true" />
       </main>
     </div>
   );

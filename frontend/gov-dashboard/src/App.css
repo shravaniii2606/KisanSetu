@@ -152,6 +152,14 @@
   color: var(--text-secondary);
 }
 
+.topbar-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
 .menu-toggle {
   display: none;
   width: 44px;
@@ -211,6 +219,11 @@
 /* Hero elements */
 .hero-copy {
   padding: 36px 36px 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
 }
 
 .hero-copy h2 {
@@ -225,6 +238,15 @@
   margin: 8px 0 0;
   font-size: 15px;
   color: var(--text-secondary);
+}
+
+.tour-end-anchor {
+  position: fixed;
+  right: 24px;
+  bottom: 24px;
+  width: 1px;
+  height: 1px;
+  pointer-events: none;
 }
 
 /* Action grids on landing */
