@@ -21,10 +21,7 @@ const app = express();
 const port = process.env.PORT || 5000;
 
 const allowedOrigins = [
-  "https://v0-dealer-dashboard-deployment.vercel.app",
-  "https://fertilizers-k584.vercel.app",
-  "https://fertilizers-rho.vercel.app",
-  "https://fertilizers-x7gz.vercel.app",
+  "https://kisan-setu-mfut.vercel.app",
 ];
 
 app.use(cors({
