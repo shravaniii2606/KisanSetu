@@ -130,13 +130,15 @@ async function getFarmerDetails(req, res) {
     const crops = cropRes.data || [];
 
     const computedLimit = calculateLimit(land, crops);
+const finalLimit = farmerRes.data.limit || computedLimit;
 
-    return res.status(200).json({
-      farmer: { ...farmerRes.data, limit: computedLimit }, // overrides the DB hardcoded limit
-      land,
-      crops,
-      soilHealth: soilRes.data || [],
-    });
+return res.status(200).json({
+  farmer: { ...farmerRes.data, limit: finalLimit },
+  land,
+  crops,
+  soilHealth: soilRes.data || [],
+}); // overrides the DB hardcoded limit
+     
   } catch (error) {
     console.error('Get farmer details failed:', error);
     return res.status(500).json({ error: getErrorMessage(error) });
