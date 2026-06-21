@@ -22,6 +22,9 @@ const port = process.env.PORT || 5000;
 
 const allowedOrigins = [
   "https://kisan-setu-one.vercel.app",
+  "https://kisan-setu-1eok.vercel.app",
+  "https://kisan-setu-ivij.vercel.app",
+  "https://kisan-setu-mfut.vercel.app",
 ];
 
 app.use(cors({
