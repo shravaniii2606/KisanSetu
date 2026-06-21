@@ -432,9 +432,9 @@ export default function NewBagScannerPage({ setCurrentPage, farmerData: initialF
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '16px' }}>
             <div>
               <p style={{ margin: 0, fontWeight: 600, color: 'var(--text-primary)' }}>Total items: {scannedBags.length}</p>
-              <p style={{ margin: '4px 0 0', color: 'var(--text-secondary)', fontSize: '13px' }}>Total amount before OTP.</p>
+             
             </div>
-            <div style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--text-primary)' }}>{formatCurrency(totalAmount)}</div>
+           
           </div>
 
           <div style={{ marginTop: '24px', display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
