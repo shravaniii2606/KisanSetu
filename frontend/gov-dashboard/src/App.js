@@ -7,6 +7,7 @@ import mockFarmerRecords from './mockFarmerRecords';
 import { PORTAL_URLS } from './portalUrls';
 
 const API_BASE_URL = process.env.REACT_APP_API_URL || "https://kisansetu-lkq6.onrender.com";
+console.log("API URL:", API_BASE_URL);
 
 function goToDealerPortal() {
   window.location.href = `${PORTAL_URLS.dealer}?view=dashboard`;
