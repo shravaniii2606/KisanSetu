@@ -21,7 +21,7 @@ const app = express();
 const port = process.env.PORT || 5000;
 
 const allowedOrigins = [
-  "https://kisan-setu-mfut.vercel.app",
+  "https://kisan-setu-one.vercel.app",
 ];
 
 app.use(cors({
